@@ -1,0 +1,10 @@
+# Force all .lua files to be recognized as Lua
+*.lua linguist-language=Lua
+
+# If you have files without extensions that are Lua scripts, 
+# you can define them explicitly here:
+# my_script_file linguist-language=Lua
+
+# Ensure any vendored or third-party libraries are not 
+# counted in the language statistics
+# vendor/* linguist-vendored
