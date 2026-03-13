@@ -1,16 +1,7 @@
 --[[
-    NOVA HUB v125 - THE HITBOX FIX EDITION
-    STOP DELETING BUTTONS OR ANY LOGIC OF THE SCRIPT.
-    NO BUTTONS DELETED. NO OPTIMIZATION. MAXIMUM STROKES.
-    Features: GunSpawn Snatcher, Full Fling, Full Bring, All Farms, Anti-Void, AFK, LMS.
-    TARGETS: CoinHolder (GoldCoin, DankCoin, Clover, Bean).
-    FIXED: MENU ANTI-AFK CRASH (Bypassed RBXScriptConnection CoreGui error).
-    FIXED: HITBOX EXPANDER NOW REVERTS SIZE WHEN DISABLED.
-    UPDATE: NEW TABBED UI (Combat, Visual, Auto-Farm) based on user mockup.
-    UPDATE: MODERNIZED SIDEBAR BUTTONS (Tweens, Corners, Padding, Accents).
-    UPDATE: ADDED CLOSE BUTTON.
-    UPDATE: ADDED HITBOX EXPANDER + SLIDER.
-    UPDATE: ADDED AUTO KILL EVERYONE (Equip check, Bring, Click, Auto-Disable).
+    NOVA HUB v126 - MODERN UI + SPEED/JUMPPOWER/INFJUMP EDITION
+    Features: Speed Changer, JumpPower Changer, Infinite Jump + All Original Features
+    FIXED: MODERNIZED TITLE BAR WITH "NOVA HUB" TITLE
 ]]
 
 -----------------------------------------------------------
@@ -24,10 +15,12 @@ _G.FlingDistance = 5
 _G.BagLimit = 25
 _G.SafeZoneOffset = -30 
 _G.VoidThreshold = -200 
-_G.HitboxSize = 15 -- DEFAULT HITBOX SIZE
+_G.HitboxSize = 15
+_G.WalkSpeed = 16 -- NEW: Default walk speed
+_G.JumpPower = 50 -- NEW: Default jump power
 
 -----------------------------------------------------------
--- SERVICE DEFINITIONS (EXPANDED STROKES)
+-- SERVICE DEFINITIONS
 -----------------------------------------------------------
 local CoreGui = game:GetService("CoreGui")
 local TweenService = game:GetService("TweenService")
@@ -61,7 +54,10 @@ local activeFarms = {
     AntiSeat = false, 
     LMSAutoDie = false,
     HitboxExpander = false,
-    AutoKillAll = false
+    AutoKillAll = false,
+    SpeedEnabled = false, -- NEW
+    JumpPowerEnabled = false, -- NEW
+    InfJump = false -- NEW
 }
 
 local espEnabled = false
@@ -155,6 +151,48 @@ local function getPlayerRole(p)
         return roleResult 
     end
 end
+
+-----------------------------------------------------------
+-- NEW: SPEED SYSTEM
+-----------------------------------------------------------
+task.spawn(function()
+    while true do
+        RunService.Heartbeat:Wait()
+        if activeFarms.SpeedEnabled == true and character ~= nil then
+            local hum = character:FindFirstChild("Humanoid")
+            if hum ~= nil then
+                hum.WalkSpeed = _G.WalkSpeed
+            end
+        end
+    end
+end)
+
+-----------------------------------------------------------
+-- NEW: JUMPPOWER SYSTEM
+-----------------------------------------------------------
+task.spawn(function()
+    while true do
+        RunService.Heartbeat:Wait()
+        if activeFarms.JumpPowerEnabled == true and character ~= nil then
+            local hum = character:FindFirstChild("Humanoid")
+            if hum ~= nil then
+                hum.JumpPower = _G.JumpPower
+            end
+        end
+    end
+end)
+
+-----------------------------------------------------------
+-- NEW: INFINITE JUMP SYSTEM
+-----------------------------------------------------------
+UserInputService.JumpRequest:Connect(function()
+    if activeFarms.InfJump == true and character ~= nil then
+        local hum = character:FindFirstChild("Humanoid")
+        if hum ~= nil then
+            hum:ChangeState(Enum.HumanoidStateType.Jumping)
+        end
+    end
+end)
 
 -----------------------------------------------------------
 -- HYPER FARM ENGINE
@@ -307,7 +345,7 @@ task.spawn(function()
 end)
 
 -----------------------------------------------------------
--- HITBOX EXPANDER LOGIC (MAXIMUM STROKES & REVERT FIX)
+-- HITBOX EXPANDER LOGIC
 -----------------------------------------------------------
 task.spawn(function()
     while true do
@@ -328,7 +366,6 @@ task.spawn(function()
                 end
             end
         else
-            -- REVERT BACK TO NORMAL WHEN DISABLED
             local pList = Players:GetPlayers()
             for i = 1, #pList do
                 local v = pList[i]
@@ -346,7 +383,7 @@ task.spawn(function()
 end)
 
 -----------------------------------------------------------
--- AUTO KILL EVERYONE LOGIC (MAXIMUM STROKES)
+-- AUTO KILL EVERYONE LOGIC
 -----------------------------------------------------------
 task.spawn(function()
     while true do
@@ -369,7 +406,7 @@ task.spawn(function()
                     VirtualUser:CaptureController()
                     VirtualUser:ClickButton1(Vector2.new(0,0))
                     task.wait(0.5)
-                    activeFarms.AutoKillAll = false -- AUTO DISABLE
+                    activeFarms.AutoKillAll = false
                 end
             end
         end
@@ -377,7 +414,7 @@ task.spawn(function()
 end)
 
 -----------------------------------------------------------
--- NIGHT MODE FIX
+-- NIGHT MODE
 -----------------------------------------------------------
 task.spawn(function()
     while true do
@@ -459,69 +496,112 @@ local function performFling(targetRole)
 end
 
 -----------------------------------------------------------
--- GUI CREATION (MODERNIZED TABBED DESIGN)
+-- GUI CREATION (MODERNIZED WITH NOVA HUB TITLE)
 -----------------------------------------------------------
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "Nova_v125"
+ScreenGui.Name = "Nova_v126"
 ScreenGui.Parent = CoreGui
 ScreenGui.ResetOnSpawn = false
 
 local Main = Instance.new("Frame")
 Main.Name = "MainFrame"
 Main.Parent = ScreenGui
-Main.Size = UDim2.new(0, 650, 0, 450) 
-Main.Position = UDim2.new(0.5, -325, 0.5, -225)
+Main.Size = UDim2.new(0, 700, 0, 500) 
+Main.Position = UDim2.new(0.5, -350, 0.5, -250)
 Main.BackgroundColor3 = Color3.fromRGB(10, 10, 10) 
 Main.Active = true 
 Main.Draggable = true
 Main.Visible = true
 Main.BorderSizePixel = 0
-Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 10)
+Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 12)
+
+-- TITLE BAR
+local TitleBar = Instance.new("Frame", Main)
+TitleBar.Size = UDim2.new(1, 0, 0, 50)
+TitleBar.Position = UDim2.new(0, 0, 0, 0)
+TitleBar.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+TitleBar.BorderSizePixel = 0
+
+local TitleCorner = Instance.new("UICorner", TitleBar)
+TitleCorner.CornerRadius = UDim.new(0, 12)
+
+local TitlePatch = Instance.new("Frame", TitleBar)
+TitlePatch.Size = UDim2.new(1, 0, 0, 25)
+TitlePatch.Position = UDim2.new(0, 0, 1, -25)
+TitlePatch.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+TitlePatch.BorderSizePixel = 0
+
+local TitleAccent = Instance.new("Frame", TitleBar)
+TitleAccent.Size = UDim2.new(1, 0, 0, 2)
+TitleAccent.Position = UDim2.new(0, 0, 1, -2)
+TitleAccent.BackgroundColor3 = Color3.fromRGB(0, 255, 150)
+TitleAccent.BorderSizePixel = 0
+
+local TitleGlow = Instance.new("Frame", TitleBar)
+TitleGlow.Size = UDim2.new(0, 10, 0, 10)
+TitleGlow.Position = UDim2.new(0, 15, 0.5, -5)
+TitleGlow.BackgroundColor3 = Color3.fromRGB(0, 255, 150)
+TitleGlow.BorderSizePixel = 0
+Instance.new("UICorner", TitleGlow).CornerRadius = UDim.new(1, 0)
+
+local TitleLabel = Instance.new("TextLabel", TitleBar)
+TitleLabel.Size = UDim2.new(1, -100, 1, 0)
+TitleLabel.Position = UDim2.new(0, 35, 0, 0)
+TitleLabel.BackgroundTransparency = 1
+TitleLabel.Text = "NOVA HUB"
+TitleLabel.TextColor3 = Color3.fromRGB(0, 255, 150)
+TitleLabel.Font = Enum.Font.GothamBold
+TitleLabel.TextSize = 20
+TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
+
+-- CLOSE BUTTON
+local CloseBtn = Instance.new("TextButton")
+CloseBtn.Name = "CloseButton"
+CloseBtn.Parent = TitleBar
+CloseBtn.Size = UDim2.new(0, 35, 0, 35)
+CloseBtn.Position = UDim2.new(1, -45, 0.5, -17.5)
+CloseBtn.BackgroundColor3 = Color3.fromRGB(150, 30, 30)
+CloseBtn.Text = "X"
+CloseBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+CloseBtn.TextSize = 18
+CloseBtn.Font = Enum.Font.GothamBold
+CloseBtn.ZIndex = 10
+Instance.new("UICorner", CloseBtn).CornerRadius = UDim.new(0, 8)
+CloseBtn.MouseButton1Click:Connect(function()
+    ScreenGui:Destroy()
+end)
 
 -- OPEN BUTTON (SHOWN WHEN MINIMIZED)
 local OpenBtn = Instance.new("TextButton")
 OpenBtn.Name = "OpenButton"
 OpenBtn.Parent = ScreenGui
-OpenBtn.Size = UDim2.new(0, 100, 0, 40)
-OpenBtn.Position = UDim2.new(0, 10, 0.5, -20)
-OpenBtn.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+OpenBtn.Size = UDim2.new(0, 120, 0, 45)
+OpenBtn.Position = UDim2.new(0, 10, 0.5, -22.5)
+OpenBtn.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
 OpenBtn.BorderSizePixel = 0
-OpenBtn.Text = "SHOW NOVA"
+OpenBtn.Text = "SHOW NOVA HUB"
 OpenBtn.TextColor3 = Color3.fromRGB(0, 255, 150)
 OpenBtn.Font = Enum.Font.GothamBold
-OpenBtn.TextSize = 12
+OpenBtn.TextSize = 11
 OpenBtn.Visible = false
-Instance.new("UICorner", OpenBtn).CornerRadius = UDim.new(0, 6)
-Instance.new("UIStroke", OpenBtn).Color = Color3.fromRGB(0, 255, 150)
-
--- CLOSE BUTTON
-local CloseBtn = Instance.new("TextButton")
-CloseBtn.Name = "CloseButton"
-CloseBtn.Parent = Main
-CloseBtn.Size = UDim2.new(0, 30, 0, 30)
-CloseBtn.Position = UDim2.new(1, -35, 0, 5)
-CloseBtn.BackgroundTransparency = 1
-CloseBtn.Text = "X"
-CloseBtn.TextColor3 = Color3.fromRGB(255, 0, 0)
-CloseBtn.TextSize = 20
-CloseBtn.Font = Enum.Font.GothamBold
-CloseBtn.ZIndex = 10
-CloseBtn.MouseButton1Click:Connect(function()
-    ScreenGui:Destroy()
-end)
+Instance.new("UICorner", OpenBtn).CornerRadius = UDim.new(0, 8)
+local OpenStroke = Instance.new("UIStroke", OpenBtn)
+OpenStroke.Color = Color3.fromRGB(0, 255, 150)
+OpenStroke.Thickness = 2
 
 -- HIDE BUTTON
 local HideBtn = Instance.new("TextButton")
 HideBtn.Name = "HideButton"
-HideBtn.Parent = Main
-HideBtn.Size = UDim2.new(0, 30, 0, 30)
-HideBtn.Position = UDim2.new(1, -70, 0, 5)
-HideBtn.BackgroundTransparency = 1
+HideBtn.Parent = TitleBar
+HideBtn.Size = UDim2.new(0, 35, 0, 35)
+HideBtn.Position = UDim2.new(1, -85, 0.5, -17.5)
+HideBtn.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
 HideBtn.Text = "_"
 HideBtn.TextColor3 = Color3.fromRGB(200, 200, 200)
 HideBtn.TextSize = 20
 HideBtn.Font = Enum.Font.GothamBold
 HideBtn.ZIndex = 10
+Instance.new("UICorner", HideBtn).CornerRadius = UDim.new(0, 8)
 HideBtn.MouseButton1Click:Connect(function()
     Main.Visible = false
     OpenBtn.Visible = true
@@ -533,49 +613,50 @@ OpenBtn.MouseButton1Click:Connect(function()
 end)
 
 -----------------------------------------------------------
--- NEW TABBED LAYOUT (MODERNIZED SIDEBAR)
+-- SIDEBAR
 -----------------------------------------------------------
 local Sidebar = Instance.new("Frame", Main)
-Sidebar.Size = UDim2.new(0, 180, 1, 0)
-Sidebar.Position = UDim2.new(0, 0, 0, 0)
+Sidebar.Size = UDim2.new(0, 200, 1, -50)
+Sidebar.Position = UDim2.new(0, 0, 0, 50)
 Sidebar.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
 Sidebar.BorderSizePixel = 0
-Instance.new("UICorner", Sidebar).CornerRadius = UDim.new(0, 10)
 
--- Fix corner bleed on the right side of the sidebar
 local SidebarPatch = Instance.new("Frame", Sidebar)
 SidebarPatch.Size = UDim2.new(0, 10, 1, 0)
 SidebarPatch.Position = UDim2.new(1, -10, 0, 0)
 SidebarPatch.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
 SidebarPatch.BorderSizePixel = 0
 
+local SidebarCorner = Instance.new("UICorner", Sidebar)
+SidebarCorner.CornerRadius = UDim.new(0, 12)
+
 local Separator = Instance.new("Frame", Main)
-Separator.Size = UDim2.new(0, 4, 1, 0)
-Separator.Position = UDim2.new(0, 180, 0, 0)
-Separator.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+Separator.Size = UDim2.new(0, 1, 1, -50)
+Separator.Position = UDim2.new(0, 200, 0, 50)
+Separator.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 Separator.BorderSizePixel = 0
 
 local ContentArea = Instance.new("Frame", Main)
-ContentArea.Size = UDim2.new(1, -188, 1, 0)
-ContentArea.Position = UDim2.new(0, 188, 0, 0)
+ContentArea.Size = UDim2.new(1, -210, 1, -60)
+ContentArea.Position = UDim2.new(0, 205, 0, 55)
 ContentArea.BackgroundTransparency = 1
 
 local ButtonsTitle = Instance.new("TextLabel", ContentArea)
-ButtonsTitle.Size = UDim2.new(1, 0, 0, 50)
-ButtonsTitle.Position = UDim2.new(0, 15, 0, 10)
-ButtonsTitle.Text = "BUTTONS :"
+ButtonsTitle.Size = UDim2.new(1, 0, 0, 40)
+ButtonsTitle.Position = UDim2.new(0, 10, 0, 0)
+ButtonsTitle.Text = "CONTROLS"
 ButtonsTitle.TextColor3 = Color3.fromRGB(200, 200, 200)
 ButtonsTitle.Font = Enum.Font.GothamBold
-ButtonsTitle.TextSize = 16
+ButtonsTitle.TextSize = 18
 ButtonsTitle.TextXAlignment = Enum.TextXAlignment.Left
 ButtonsTitle.BackgroundTransparency = 1
 
 -----------------------------------------------------------
--- TABS LOGIC (MODERNIZED MAXIMUM STROKES)
+-- TABS LOGIC
 -----------------------------------------------------------
 local function createModernTabButton(txt, yOffset, parent)
     local btn = Instance.new("TextButton", parent)
-    btn.Size = UDim2.new(1, -20, 0, 45)
+    btn.Size = UDim2.new(1, -20, 0, 48)
     btn.Position = UDim2.new(0, 10, 0, yOffset)
     btn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
     btn.BackgroundTransparency = 0.5
@@ -589,7 +670,7 @@ local function createModernTabButton(txt, yOffset, parent)
     padding.PaddingLeft = UDim.new(0, 15)
     
     local corner = Instance.new("UICorner", btn)
-    corner.CornerRadius = UDim.new(0, 8)
+    corner.CornerRadius = UDim.new(0, 10)
     
     btn.MouseEnter:Connect(function()
         if btn.TextColor3 ~= Color3.fromRGB(255, 255, 255) then
@@ -608,22 +689,22 @@ local function createModernTabButton(txt, yOffset, parent)
     return btn
 end
 
-local TabCombatBtn = createModernTabButton("COMBAT", 30, Sidebar)
-local TabVisualBtn = createModernTabButton("VISUAL", 85, Sidebar)
-local TabFarmBtn = createModernTabButton("AUTO - FARM", 140, Sidebar)
+local TabCombatBtn = createModernTabButton("COMBAT", 15, Sidebar)
+local TabVisualBtn = createModernTabButton("VISUAL", 75, Sidebar)
+local TabFarmBtn = createModernTabButton("AUTO - FARM", 135, Sidebar)
 
 local CombatCol = Instance.new("ScrollingFrame", ContentArea)
-CombatCol.Size = UDim2.new(1, -30, 1, -60)
-CombatCol.Position = UDim2.new(0, 15, 0, 50)
+CombatCol.Size = UDim2.new(1, -20, 1, -50)
+CombatCol.Position = UDim2.new(0, 10, 0, 40)
 CombatCol.BackgroundTransparency = 1
-CombatCol.CanvasSize = UDim2.new(0, 0, 3.5, 0)
+CombatCol.CanvasSize = UDim2.new(0, 0, 4, 0)
 CombatCol.ScrollBarThickness = 4
 CombatCol.Visible = true
 Instance.new("UIListLayout", CombatCol).Padding = UDim.new(0, 8)
 
 local VisualCol = Instance.new("ScrollingFrame", ContentArea)
-VisualCol.Size = UDim2.new(1, -30, 1, -60)
-VisualCol.Position = UDim2.new(0, 15, 0, 50)
+VisualCol.Size = UDim2.new(1, -20, 1, -50)
+VisualCol.Position = UDim2.new(0, 10, 0, 40)
 VisualCol.BackgroundTransparency = 1
 VisualCol.CanvasSize = UDim2.new(0, 0, 1.5, 0)
 VisualCol.ScrollBarThickness = 4
@@ -631,8 +712,8 @@ VisualCol.Visible = false
 Instance.new("UIListLayout", VisualCol).Padding = UDim.new(0, 8)
 
 local FarmCol = Instance.new("ScrollingFrame", ContentArea)
-FarmCol.Size = UDim2.new(1, -30, 1, -60)
-FarmCol.Position = UDim2.new(0, 15, 0, 50)
+FarmCol.Size = UDim2.new(1, -20, 1, -50)
+FarmCol.Position = UDim2.new(0, 10, 0, 40)
 FarmCol.BackgroundTransparency = 1
 FarmCol.CanvasSize = UDim2.new(0, 0, 2.5, 0)
 FarmCol.ScrollBarThickness = 4
@@ -689,14 +770,13 @@ local function createToggle(txt, key, parent)
     b.Font = Enum.Font.GothamBold
     b.TextSize = 13
     b.TextColor3 = Color3.fromRGB(200, 200, 200)
-    Instance.new("UICorner", b).CornerRadius = UDim.new(0, 4)
+    Instance.new("UICorner", b).CornerRadius = UDim.new(0, 8)
     b.MouseButton1Click:Connect(function()
         if key == "ESP" then espEnabled = not espEnabled else activeFarms[key] = not activeFarms[key] end
         local check = (key == "ESP") and espEnabled or activeFarms[key]
         b.BackgroundColor3 = check and Color3.fromRGB(40, 120, 60) or Color3.fromRGB(20, 20, 20)
     end)
     
-    -- Visual updater to auto-refresh buttons if script disables a feature (like AutoKillAll)
     task.spawn(function()
         while true do
             task.wait(0.1)
@@ -712,12 +792,12 @@ local function createSlider(name, min, max, default, parent, callback)
     local f = Instance.new("Frame", parent)
     f.Size = UDim2.new(1, -10, 0, 60)
     f.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-    Instance.new("UICorner", f).CornerRadius = UDim.new(0, 4)
+    Instance.new("UICorner", f).CornerRadius = UDim.new(0, 8)
     local l = Instance.new("TextLabel", f); l.Size = UDim2.new(1, 0, 0, 25); l.Text = name .. ": " .. default; l.TextColor3 = Color3.new(1, 1, 1);
     l.BackgroundTransparency = 1; l.Font = Enum.Font.GothamBold; l.TextSize = 12
     local b = Instance.new("TextButton", f); b.Size = UDim2.new(0.8, 0, 0, 6); b.Position = UDim2.new(0.1, 0, 0.6, 0); b.BackgroundColor3 = Color3.fromRGB(50, 50, 50);
     b.Text = ""
-    local fill = Instance.new("Frame", b); fill.Size = UDim2.new((default - min) / (max - min), 0, 1, 0); fill.BackgroundColor3 = Color3.fromRGB(100, 100, 100);
+    local fill = Instance.new("Frame", b); fill.Size = UDim2.new((default - min) / (max - min), 0, 1, 0); fill.BackgroundColor3 = Color3.fromRGB(0, 255, 150);
     fill.BorderSizePixel = 0
     b.MouseButton1Down:Connect(function()
         local move; move = RunService.RenderStepped:Connect(function()
@@ -742,8 +822,56 @@ local function createButton(txt, color, parent, callback)
     b.Font = Enum.Font.GothamBold
     b.TextSize = 13
     b.TextColor3 = Color3.new(1, 1, 1)
-    Instance.new("UICorner", b).CornerRadius = UDim.new(0, 4)
+    Instance.new("UICorner", b).CornerRadius = UDim.new(0, 8)
     b.MouseButton1Click:Connect(callback)
+end
+
+-- NEW: Text Input Factory
+local function createTextInput(labelText, defaultValue, parent, callback)
+    local container = Instance.new("Frame", parent)
+    container.Size = UDim2.new(1, -10, 0, 70)
+    container.BackgroundColor3 = Color3.fromRGB(18, 18, 18)
+    Instance.new("UICorner", container).CornerRadius = UDim.new(0, 8)
+    local stroke = Instance.new("UIStroke", container)
+    stroke.Color = Color3.fromRGB(30, 30, 30)
+    stroke.Thickness = 1
+    
+    local padding = Instance.new("UIPadding", container)
+    padding.PaddingTop = UDim.new(0, 8)
+    padding.PaddingBottom = UDim.new(0, 8)
+    padding.PaddingLeft = UDim.new(0, 10)
+    padding.PaddingRight = UDim.new(0, 10)
+    
+    local label = Instance.new("TextLabel", container)
+    label.Size = UDim2.new(1, 0, 0, 15)
+    label.Position = UDim2.new(0, 0, 0, 0)
+    label.Text = labelText
+    label.TextColor3 = Color3.fromRGB(0, 255, 150)
+    label.Font = Enum.Font.GothamBold
+    label.TextSize = 11
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.BackgroundTransparency = 1
+    
+    local textBox = Instance.new("TextBox", container)
+    textBox.Size = UDim2.new(1, 0, 0, 35)
+    textBox.Position = UDim2.new(0, 0, 0, 20)
+    textBox.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    textBox.Text = tostring(defaultValue)
+    textBox.TextColor3 = Color3.fromRGB(200, 200, 200)
+    textBox.Font = Enum.Font.GothamBold
+    textBox.TextSize = 14
+    textBox.PlaceholderText = tostring(defaultValue)
+    textBox.PlaceholderColor3 = Color3.fromRGB(100, 100, 100)
+    Instance.new("UICorner", textBox).CornerRadius = UDim.new(0, 6)
+    local boxStroke = Instance.new("UIStroke", textBox)
+    boxStroke.Color = Color3.fromRGB(50, 50, 50)
+    boxStroke.Thickness = 2
+    
+    textBox.FocusLost:Connect(function()
+        callback(tonumber(textBox.Text) or defaultValue)
+    end)
+    
+    return container
 end
 
 -----------------------------------------------------------
@@ -758,8 +886,19 @@ createHeader("AUTO KILL", CombatCol)
 createToggle("AUTO KILL EVERYONE", "AutoKillAll", CombatCol)
 
 createHeader("MOVEMENT & TP", CombatCol)
-createButton("TP TO MAP", Color3.fromRGB(40, 40, 40), CombatCol, tpToMap)
+createButton("TP TO MAP", Color3.fromRGB(50, 50, 50), CombatCol, tpToMap)
 createToggle("ANTI-VOID", "AntiVoid", CombatCol)
+
+-- NEW: SPEED CONTROLS
+createTextInput("⚡ SPEED", _G.WalkSpeed, CombatCol, function(v) _G.WalkSpeed = v end)
+createToggle("ENABLE SPEED", "SpeedEnabled", CombatCol)
+
+-- NEW: JUMPPOWER CONTROLS
+createTextInput("🚀 JUMP POWER", _G.JumpPower, CombatCol, function(v) _G.JumpPower = v end)
+createToggle("ENABLE JUMP POWER", "JumpPowerEnabled", CombatCol)
+
+-- NEW: INFINITE JUMP
+createToggle("∞ INFINITE JUMP", "InfJump", CombatCol)
 
 createHeader("COMBAT CHEATS", CombatCol)
 createToggle("GUN SNATCHER (GUNSPAWN)", "Snatcher", CombatCol)
@@ -926,18 +1065,15 @@ RunService.Heartbeat:Connect(function()
     end
 end)
 
--- FIXED MENU ANTI-AFK (BYPASSED CORE GUI ERROR, MAXIMUM STROKES PRESERVED)
 task.spawn(function()
     while true do
         task.wait(5)
         if activeFarms.AntiAFK == true then
             pcall(function()
-                -- Safe fallback using VirtualUser to prevent AFK without touching CoreGui Settings
                 VirtualUser:CaptureController()
                 VirtualUser:ClickButton2(Vector2.new(0,0))
             end)
             
-            -- FALLBACK KEYBOARD SIMULATION
             VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.RightShift, false, game)
             task.wait(0.01)
             VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.RightShift, false, game)
