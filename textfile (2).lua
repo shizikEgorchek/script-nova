@@ -1,7 +1,8 @@
 --[[
-    NOVA HUB v126 - MODERN UI + SPEED/JUMPPOWER/INFJUMP EDITION
-    Features: Speed Changer, JumpPower Changer, Infinite Jump + All Original Features
-    FIXED: MODERNIZED TITLE BAR WITH "NOVA HUB" TITLE
+    NOVA HUB v127 - COMPLETE FIXED VERSION
+    FIXES: Auto farm now stops ONLY coins at 25, continues clovers/beans
+    FIXES: Removed GunHip and Hold errors
+    ADDED: Speed, JumpPower, Infinite Jump controls
 ]]
 
 -----------------------------------------------------------
@@ -16,8 +17,8 @@ _G.BagLimit = 25
 _G.SafeZoneOffset = -30 
 _G.VoidThreshold = -200 
 _G.HitboxSize = 15
-_G.WalkSpeed = 16 -- NEW: Default walk speed
-_G.JumpPower = 50 -- NEW: Default jump power
+_G.WalkSpeed = 16
+_G.JumpPower = 50
 
 -----------------------------------------------------------
 -- SERVICE DEFINITIONS
@@ -55,9 +56,9 @@ local activeFarms = {
     LMSAutoDie = false,
     HitboxExpander = false,
     AutoKillAll = false,
-    SpeedEnabled = false, -- NEW
-    JumpPowerEnabled = false, -- NEW
-    InfJump = false -- NEW
+    SpeedEnabled = false,
+    JumpPowerEnabled = false,
+    InfJump = false
 }
 
 local espEnabled = false
@@ -153,7 +154,7 @@ local function getPlayerRole(p)
 end
 
 -----------------------------------------------------------
--- NEW: SPEED SYSTEM
+-- SPEED SYSTEM
 -----------------------------------------------------------
 task.spawn(function()
     while true do
@@ -168,7 +169,7 @@ task.spawn(function()
 end)
 
 -----------------------------------------------------------
--- NEW: JUMPPOWER SYSTEM
+-- JUMPPOWER SYSTEM
 -----------------------------------------------------------
 task.spawn(function()
     while true do
@@ -183,7 +184,7 @@ task.spawn(function()
 end)
 
 -----------------------------------------------------------
--- NEW: INFINITE JUMP SYSTEM
+-- INFINITE JUMP SYSTEM
 -----------------------------------------------------------
 UserInputService.JumpRequest:Connect(function()
     if activeFarms.InfJump == true and character ~= nil then
@@ -195,8 +196,39 @@ UserInputService.JumpRequest:Connect(function()
 end)
 
 -----------------------------------------------------------
--- HYPER FARM ENGINE
+-- HYPER FARM ENGINE (FIXED VERSION)
 -----------------------------------------------------------
+local function getCoinValue()
+    local collected = player:FindFirstChild("CoinsCollected")
+    if collected ~= nil and (collected:IsA("IntValue") or collected:IsA("NumberValue")) then
+        return collected.Value
+    end
+
+    local stats = player:FindFirstChild("leaderstats")
+    if stats ~= nil then
+        local c1 = stats:FindFirstChild("Coins")
+        if c1 ~= nil then return c1.Value end
+        local c2 = stats:FindFirstChild("Coin")
+        if c2 ~= nil then return c2.Value end
+        local c3 = stats:FindFirstChild("Gold")
+        if c3 ~= nil then return c3.Value end
+        local c4 = stats:FindFirstChild("C")
+        if c4 ~= nil then return c4.Value end
+    end
+    
+    local coinData = player:FindFirstChild("CoinData")
+    if coinData ~= nil then
+        local v1 = coinData:FindFirstChild("Coins")
+        if v1 ~= nil then return v1.Value end
+        local v2 = coinData:FindFirstChild("Coin")
+        if v2 ~= nil then return v2.Value end
+        local v3 = coinData:FindFirstChild("Gold")
+        if v3 ~= nil then return v3.Value end
+    end
+
+    return 0
+end
+
 local function getFarmTarget()
     local holder = Workspace:FindFirstChild("CoinHolder")
     if holder ~= nil then
@@ -248,20 +280,10 @@ task.spawn(function()
                 local currentCoins = getCoinValue()
                 local target = getFarmTarget()
                 
-                -- NEW LOGIC: Only go to safe zone if NO target AND bag is full
-                -- OR if ONLY coin farming is active and bag is full
+                -- Only go to safe zone if bag is full AND no clovers/beans to farm
                 local shouldGoToSafeZone = false
-                
-                if target == nil then
-                    -- If bag is full and only coin farming is enabled, go to safe zone
-                    if currentCoins >= _G.BagLimit and activeFarms.Coins == true then
-                        if activeFarms.Clover == false and activeFarms.Beans == false then
-                            shouldGoToSafeZone = true
-                        end
-                    elseif currentCoins >= _G.BagLimit and activeFarms.Coins == false then
-                        -- If not farming coins and no other targets, don't go to safe zone
-                        shouldGoToSafeZone = false
-                    elseif target == nil and (activeFarms.Clover == false and activeFarms.Beans == false) then
+                if currentCoins >= _G.BagLimit and target == nil then
+                    if activeFarms.Clover == false and activeFarms.Beans == false then
                         shouldGoToSafeZone = true
                     end
                 end
@@ -309,8 +331,7 @@ task.spawn(function()
                                 root.Velocity = Vector3.new(0, 0, 0)
                                 root.RotVelocity = Vector3.new(0, 0, 0)
                                 
-                                -- Don't cancel tween if farming clovers/beans even with full coin bag
-                                -- Only cancel if target is a coin and bag is full
+                                -- Only cancel for coin targets when bag is full
                                 local midTweenCheck = getCoinValue()
                                 if midTweenCheck >= _G.BagLimit then
                                     if target.Name == "GoldCoin" or target.Name == "DankCoin" or 
@@ -496,7 +517,7 @@ end
 -- GUI CREATION (MODERNIZED WITH NOVA HUB TITLE)
 -----------------------------------------------------------
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "Nova_v126"
+ScreenGui.Name = "Nova_v127"
 ScreenGui.Parent = CoreGui
 ScreenGui.ResetOnSpawn = false
 
@@ -823,7 +844,6 @@ local function createButton(txt, color, parent, callback)
     b.MouseButton1Click:Connect(callback)
 end
 
--- NEW: Text Input Factory
 local function createTextInput(labelText, defaultValue, parent, callback)
     local container = Instance.new("Frame", parent)
     container.Size = UDim2.new(1, -10, 0, 70)
@@ -886,15 +906,15 @@ createHeader("MOVEMENT & TP", CombatCol)
 createButton("TP TO MAP", Color3.fromRGB(50, 50, 50), CombatCol, tpToMap)
 createToggle("ANTI-VOID", "AntiVoid", CombatCol)
 
--- NEW: SPEED CONTROLS
+-- SPEED CONTROLS
 createTextInput("⚡ SPEED", _G.WalkSpeed, CombatCol, function(v) _G.WalkSpeed = v end)
 createToggle("ENABLE SPEED", "SpeedEnabled", CombatCol)
 
--- NEW: JUMPPOWER CONTROLS
+-- JUMPPOWER CONTROLS
 createTextInput("🚀 JUMP POWER", _G.JumpPower, CombatCol, function(v) _G.JumpPower = v end)
 createToggle("ENABLE JUMP POWER", "JumpPowerEnabled", CombatCol)
 
--- NEW: INFINITE JUMP
+-- INFINITE JUMP
 createToggle("∞ INFINITE JUMP", "InfJump", CombatCol)
 
 createHeader("COMBAT CHEATS", CombatCol)
