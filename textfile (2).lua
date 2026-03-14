@@ -197,41 +197,12 @@ end)
 -----------------------------------------------------------
 -- HYPER FARM ENGINE
 -----------------------------------------------------------
-local function getCoinValue()
-    local collected = player:FindFirstChild("CoinsCollected")
-    if collected ~= nil and (collected:IsA("IntValue") or collected:IsA("NumberValue")) then
-        return collected.Value
-    end
-
-    local stats = player:FindFirstChild("leaderstats")
-    if stats ~= nil then
-        local c1 = stats:FindFirstChild("Coins")
-        if c1 ~= nil then return c1.Value end
-        local c2 = stats:FindFirstChild("Coin")
-        if c2 ~= nil then return c2.Value end
-        local c3 = stats:FindFirstChild("Gold")
-        if c3 ~= nil then return c3.Value end
-        local c4 = stats:FindFirstChild("C")
-        if c4 ~= nil then return c4.Value end
-    end
-    
-    local coinData = player:FindFirstChild("CoinData")
-    if coinData ~= nil then
-        local v1 = coinData:FindFirstChild("Coins")
-        if v1 ~= nil then return v1.Value end
-        local v2 = coinData:FindFirstChild("Coin")
-        if v2 ~= nil then return v2.Value end
-        local v3 = coinData:FindFirstChild("Gold")
-        if v3 ~= nil then return v3.Value end
-    end
-
-    return 0
-end
-
 local function getFarmTarget()
     local holder = Workspace:FindFirstChild("CoinHolder")
     if holder ~= nil then
         local children = holder:GetDescendants()
+        local currentCoins = getCoinValue()
+        
         for i = 1, #children do
             local item = children[i]
             if item:IsA("BasePart") and not ignoreList[item] then
@@ -239,17 +210,20 @@ local function getFarmTarget()
                 local pName = ""
                 if item.Parent ~= nil then pName = item.Parent.Name end
                 
-                if activeFarms.Coins == true then
+                -- ONLY farm coins if bag is NOT full
+                if activeFarms.Coins == true and currentCoins < _G.BagLimit then
                     if name == "GoldCoin" then return item end
                     if name == "DankCoin" then return item end
                     if pName == "GoldCoin" then return item end
                     if pName == "DankCoin" then return item end
                 end
                 
+                -- ALWAYS farm clovers regardless of coin bag status
                 if activeFarms.Clover == true then
                     if name == "Clover" or pName == "Clover" then return item end
                 end
                 
+                -- ALWAYS farm beans regardless of coin bag status
                 if activeFarms.Beans == true then
                     if name == "Bean" or pName == "Bean" then return item end
                 end
@@ -274,7 +248,25 @@ task.spawn(function()
                 local currentCoins = getCoinValue()
                 local target = getFarmTarget()
                 
-                if currentCoins >= _G.BagLimit or target == nil then
+                -- NEW LOGIC: Only go to safe zone if NO target AND bag is full
+                -- OR if ONLY coin farming is active and bag is full
+                local shouldGoToSafeZone = false
+                
+                if target == nil then
+                    -- If bag is full and only coin farming is enabled, go to safe zone
+                    if currentCoins >= _G.BagLimit and activeFarms.Coins == true then
+                        if activeFarms.Clover == false and activeFarms.Beans == false then
+                            shouldGoToSafeZone = true
+                        end
+                    elseif currentCoins >= _G.BagLimit and activeFarms.Coins == false then
+                        -- If not farming coins and no other targets, don't go to safe zone
+                        shouldGoToSafeZone = false
+                    elseif target == nil and (activeFarms.Clover == false and activeFarms.Beans == false) then
+                        shouldGoToSafeZone = true
+                    end
+                end
+                
+                if shouldGoToSafeZone == true then
                     if isInSafeZone == false then
                         local plat = Workspace:FindFirstChild("NovaSafePlatform")
                         if plat == nil then
@@ -317,10 +309,15 @@ task.spawn(function()
                                 root.Velocity = Vector3.new(0, 0, 0)
                                 root.RotVelocity = Vector3.new(0, 0, 0)
                                 
+                                -- Don't cancel tween if farming clovers/beans even with full coin bag
+                                -- Only cancel if target is a coin and bag is full
                                 local midTweenCheck = getCoinValue()
                                 if midTweenCheck >= _G.BagLimit then
-                                    if currentTween ~= nil then currentTween:Cancel() end
-                                    break
+                                    if target.Name == "GoldCoin" or target.Name == "DankCoin" or 
+                                       (target.Parent and (target.Parent.Name == "GoldCoin" or target.Parent.Name == "DankCoin")) then
+                                        if currentTween ~= nil then currentTween:Cancel() end
+                                        break
+                                    end
                                 end
 
                                 local distCheck = (root.Position - target.Position).Magnitude
